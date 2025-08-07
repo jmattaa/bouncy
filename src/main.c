@@ -1,6 +1,7 @@
 #include "circle.h"
 #include "constants.h"
 #include <SDL3/SDL.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -50,6 +51,16 @@ int main(void)
             case SDL_EVENT_KEY_DOWN:
                 if (e.key.key == SDLK_ESCAPE)
                     running = 0;
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                if (e.button.button == SDL_BUTTON_LEFT)
+                {
+                    const double dx = e.motion.x - cir.x;
+                    const double dy = e.motion.y - cir.y;
+
+                    cir.vx += dx * .08;
+                    cir.vy += dy * .08;
+                }
                 break;
             }
         }
