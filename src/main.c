@@ -14,6 +14,8 @@ void panic()
 
 int main(void)
 {
+    srand(time(NULL));
+
     if (!SDL_Init(SDL_INIT_VIDEO))
         panic();
     SDL_Window *win =
@@ -29,12 +31,17 @@ int main(void)
     if (!win_surface)
         panic();
 
-    struct Circle cir = (struct Circle){
-        .x = 100,
-        .y = 100,
-        .r = 50,
-        .col = 0xffeeeeee,
-        .vx = 4,
+    size_t ncircles = 1;
+    struct Circle *circles = calloc(ncircles, sizeof(struct Circle));
+    if (!circles)
+        panic();
+    circles[0] = (struct Circle){
+        .x = (double)WIN_W / 2,
+        .y = (double)WIN_H / 2,
+        .r = 10,
+        .vx = rand() % 100 - 50,
+        .vy = 0,
+        .col = 0xff << 24 | rand() % 0xffffff, // hihi
     };
 
     uint8_t running = 1;
@@ -55,11 +62,32 @@ int main(void)
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 if (e.button.button == SDL_BUTTON_LEFT)
                 {
-                    const double dx = e.motion.x - cir.x;
-                    const double dy = e.motion.y - cir.y;
+                    for (size_t i = 0; i < ncircles; i++)
+                    {
+                        struct Circle *cir = &circles[i];
+                        const double dx = e.motion.x - cir->x;
+                        const double dy = e.motion.y - cir->y;
 
-                    cir.vx += dx * .08;
-                    cir.vy += dy * .08;
+                        cir->vx += dx * .08;
+                        cir->vy += dy * .08;
+                    }
+                }
+                if (e.button.button == SDL_BUTTON_RIGHT)
+                {
+                    ncircles++;
+                    circles =
+                        realloc(circles, ncircles * sizeof(struct Circle));
+                    if (!circles)
+                        panic();
+
+                    circles[ncircles - 1] = (struct Circle){
+                        .x = e.motion.x,
+                        .y = e.motion.y,
+                        .r = 10,
+                        .vx = rand() % 100 - 50,
+                        .vy = 0,
+                        .col = 0xff << 24 | rand() % 0xffffff, // hihi
+                    };
                 }
                 break;
             }
@@ -67,12 +95,18 @@ int main(void)
 
         SDL_FillSurfaceRect(win_surface, NULL, 0xff101010);
 
-        CircleFill(win_surface, cir);
-        CircleUpdate(&cir);
+        for (size_t i = 0; i < ncircles; i++)
+        {
+            struct Circle *cir = &circles[i];
+            CircleFill(win_surface, *cir);
+            CircleUpdate(cir);
+        }
 
         SDL_UpdateWindowSurface(win);
         SDL_Delay(16); // ~60fps
     }
+
+    free(circles);
 
     SDL_DestroyWindow(win);
     SDL_Quit();
