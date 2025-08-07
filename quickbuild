@@ -1,10 +1,10 @@
 cc = "gcc";
 
-cflags = "-Iinclude $(pkg-config --cflags sdl3)";
+cflags = "-Iinclude $(pkg-config --cflags sdl3 sdl3-ttf)";
 cflagsdev = "-g -Wall -Wextra -fsanitize=address [cflags]";
 cflagsrel = "-O3 [cflags]";
 
-lflags = "$(pkg-config --libs sdl3)";
+lflags = "$(pkg-config --libs sdl3 sdl3-ttf)";
 lflagsdev = "-g -fsanitize=address [lflags]";
 lflagsrel = "-O3 [lflags]";
 

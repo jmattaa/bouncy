@@ -1,6 +1,7 @@
 #include "circle.h"
 #include "constants.h"
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +24,14 @@ int main(void)
     if (!win)
         panic();
 
+    if (!TTF_Init())
+        panic();
+
+    TTF_TextEngine *text_engine = TTF_CreateSurfaceTextEngine();
+    TTF_Font *text_font = TTF_OpenFont("assets/font.ttf", 16);
+    if (!text_font)
+        panic();
+
     // raise the window
     if (!SDL_RaiseWindow(win))
         panic();
@@ -31,18 +40,21 @@ int main(void)
     if (!win_surface)
         panic();
 
-    size_t ncircles = 1;
+    size_t ncircles = 1; // initial number of circles
     struct Circle *circles = calloc(ncircles, sizeof(struct Circle));
     if (!circles)
         panic();
-    circles[0] = (struct Circle){
-        .x = (double)WIN_W / 2,
-        .y = (double)WIN_H / 2,
-        .r = 10,
-        .vx = rand() % 100 - 50,
-        .vy = 0,
-        .col = 0xff << 24 | rand() % 0xffffff, // hihi
-    };
+    for (size_t i = 0; i < ncircles; i++)
+        circles[i] = (struct Circle){
+            .x = rand() % WIN_W,
+            .y = rand() % WIN_H,
+            .r = 10,
+            .vx = rand() % 100 - 50,
+            .vy = 0,
+            .col = 0xff << 24 | rand() % 0xffffff, // hihi
+        };
+
+    const char *txt = "circles: ";
 
     uint8_t running = 1;
     while (running)
@@ -101,6 +113,13 @@ int main(void)
             CircleFill(win_surface, *cir);
             CircleUpdate(cir);
         }
+
+        char ncircles_text[(size_t)(strlen(txt) + log10(ncircles) + 2)];
+        snprintf(ncircles_text, sizeof(ncircles_text), "%s%zu", txt, ncircles);
+
+        TTF_Text *ncircles_text_render = TTF_CreateText(
+            text_engine, text_font, ncircles_text, strlen(ncircles_text));
+        TTF_DrawSurfaceText(ncircles_text_render, 0, 0, win_surface);
 
         SDL_UpdateWindowSurface(win);
         SDL_Delay(16); // ~60fps
